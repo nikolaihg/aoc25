@@ -2,9 +2,10 @@ package utils
 
 import (
 	"bufio"
+	"encoding/csv"
+	"io"
 	"log"
 	"os"
-	"strings"
 )
 
 func ReadLines(fp string) []string {
@@ -26,41 +27,26 @@ func ReadLines(fp string) []string {
 	return lines
 }
 
-func SplitString(s string) []string {
-	lines := strings.Split(s, "\n")
-	var out []string
+func ReadCSV(fp string) [][]string {
+	f, err := os.Open(fp)
+	if err != nil {
+		log.Fatalf("Coud not open file: %v", err)
+	}
+	defer f.Close()
 
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
+	r := csv.NewReader(f)
+	var records [][]string
+
+	for {
+		line, err := r.Read()
+		if err == io.EOF {
+			break
 		}
-		out = append(out, line)
-	}
-	return out
-}
-
-func SplitByBlank(s string) [][]string {
-	lines := strings.Split(s, "\n")
-	var groups [][]string
-	var cur []string
-
-	for _, l := range lines {
-		if strings.TrimSpace(l) == "" {
-			if len(cur) > 0 {
-				groups = append(groups, cur)
-				cur = nil
-			}
-			continue
+		if err != nil {
+			log.Fatal(err)
 		}
-		cur = append(cur, l)
+		records = append(records, line)
 	}
-	if len(cur) > 0 {
-		groups = append(groups, cur)
-	}
-	return groups
-}
 
-func Mod(a int, b int) int {
-	return (a%b + b) % b
+	return records
 }
